@@ -15,6 +15,7 @@ https://fundf10.eastmoney.com/jjjl_001810.html
 用户ID:269993
 """
 
+import datetime
 import json
 import math
 import time
@@ -1221,6 +1222,54 @@ def fund_hk_fund_hist_em(
             ]
         ]
     return temp_one_df
+
+
+def fund_nav_change_em(symbol: str = "000001") -> pd.DataFrame:
+    """
+    东方财富网-天天基金网-基金数据-近一个月净值涨跌幅
+    https://fundf10.eastmoney.com/jjjz_{symbol}.html
+    :param symbol: 基金代码，适用于开放式基金、ETF、分级基金
+    :type symbol: str
+    :return: 近一个月每日净值数据，含相对首个交易日的累计涨跌幅（%）
+    :rtype: pandas.DataFrame
+    """
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=35)
+    url = "https://api.fund.eastmoney.com/f10/lsjz"
+    req_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
+        "Referer": f"https://fundf10.eastmoney.com/jjjz_{symbol}.html",
+    }
+    params = {
+        "fundCode": symbol,
+        "pageIndex": "1",
+        "pageSize": "40",
+        "startDate": str(start_date),
+        "endDate": str(end_date),
+        "_": round(time.time() * 1000),
+    }
+    r = requests.get(url, params=params, headers=req_headers)
+    data_json = r.json()
+    records = data_json["Data"]["LSJZList"]
+    if not records:
+        return pd.DataFrame(columns=["净值日期", "单位净值", "日增长率", "近一月涨跌幅"])
+    temp_df = pd.DataFrame(records)
+    # lsjz 接口第1列为单位净值，第7列（index 6）为日增长率
+    temp_df = temp_df.iloc[:, [0, 1, 6]]
+    temp_df.columns = ["净值日期", "单位净值", "日增长率"]
+    temp_df["净值日期"] = pd.to_datetime(temp_df["净值日期"], errors="coerce").dt.date
+    temp_df["单位净值"] = pd.to_numeric(temp_df["单位净值"], errors="coerce")
+    temp_df["日增长率"] = pd.to_numeric(temp_df["日增长率"], errors="coerce")
+    temp_df.sort_values("净值日期", inplace=True, ignore_index=True)
+    temp_df.dropna(subset=["单位净值"], inplace=True)
+    if temp_df.empty:
+        return temp_df
+    first_nav = temp_df["单位净值"].iloc[0]
+    temp_df["近一月涨跌幅"] = (
+        (temp_df["单位净值"] - first_nav) / first_nav * 100
+    ).round(4)
+    return temp_df
 
 
 if __name__ == "__main__":

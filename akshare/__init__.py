@@ -5298,6 +5298,7 @@ from akshare.fund.fund_em import (
     fund_value_estimation_em,
     fund_hk_fund_hist_em,
     fund_purchase_em,
+    fund_nav_change_em,
 )
 
 """
