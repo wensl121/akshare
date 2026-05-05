@@ -311,6 +311,51 @@ def fund_portfolio_change_em(
     return big_df
 
 
+def fund_portfolio_asset_allocation_em(
+    symbol: str = "000001", date: str = "2024"
+) -> pd.DataFrame:
+    """
+    天天基金网-基金档案-投资组合-资产配置
+    https://fundf10.eastmoney.com/zcpz_000001.html
+    :param symbol: 基金代码
+    :type symbol: str
+    :param date: 查询年份; 为空字符串时返回所有年份数据
+    :type date: str
+    :return: 资产配置
+    :rtype: pandas.DataFrame
+    """
+    from bs4 import BeautifulSoup
+
+    url = f"https://fundf10.eastmoney.com/zcpz_{symbol}.html"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://fundf10.eastmoney.com/",
+    }
+    r = requests.get(url, headers=headers)
+    r.encoding = "utf-8"
+    soup = BeautifulSoup(r.text, "lxml")
+    table = soup.find("table", class_="w782 comm tzxq")
+    temp_df = pd.read_html(StringIO(str(table)))[0]
+    temp_df.columns = [
+        "报告期",
+        "股票占净值比例",
+        "债券占净值比例",
+        "现金占净值比例",
+        "净资产",
+    ]
+    if date:
+        temp_df = temp_df[temp_df["报告期"].str.startswith(date)]
+        temp_df.reset_index(drop=True, inplace=True)
+    for col in ["股票占净值比例", "债券占净值比例", "现金占净值比例"]:
+        temp_df[col] = (
+            temp_df[col].astype(str).str.replace("%", "", regex=False).str.strip()
+        )
+        temp_df[col] = pd.to_numeric(temp_df[col], errors="coerce")
+    temp_df["净资产"] = pd.to_numeric(temp_df["净资产"], errors="coerce")
+    return temp_df
+
+
 if __name__ == "__main__":
     fund_portfolio_hold_em_df = fund_portfolio_hold_em(symbol="000001", date="2024")
     print(fund_portfolio_hold_em_df)
@@ -334,3 +379,8 @@ if __name__ == "__main__":
         symbol="003567", indicator="累计卖出", date="2023"
     )
     print(fund_portfolio_change_em_df)
+
+    fund_portfolio_asset_allocation_em_df = fund_portfolio_asset_allocation_em(
+        symbol="000001", date="2024"
+    )
+    print(fund_portfolio_asset_allocation_em_df)

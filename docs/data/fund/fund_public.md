@@ -3257,6 +3257,52 @@ print(fund_portfolio_industry_allocation_em_df)
 36  37     水利、环境和公共设施管理业   0.00      10.346959  2023-03-31
 ```
 
+### 资产配置
+
+接口: fund_portfolio_asset_allocation_em
+
+目标地址: https://fundf10.eastmoney.com/zcpz_000001.html
+
+描述: 天天基金网-基金档案-投资组合-资产配置
+
+限量: 单次返回指定 symbol 和 date 的所有资产配置数据; date 为空字符串时返回所有历史数据
+
+输入参数
+
+| 名称     | 类型  | 描述                                                          |
+|--------|-----|-------------------------------------------------------------|
+| symbol | str | symbol="000001"; 基金代码, 可以通过调用 **ak.fund_name_em()** 接口获取   |
+| date   | str | date="2024"; 指定年份, 如 "2024"; 传入空字符串 "" 返回所有历史数据             |
+
+输出参数
+
+| 名称        | 类型      | 描述         |
+|-----------|---------|------------|
+| 报告期       | object  | -          |
+| 股票占净值比例   | float64 | 注意单位: %    |
+| 债券占净值比例   | float64 | 注意单位: %    |
+| 现金占净值比例   | float64 | 注意单位: %    |
+| 净资产       | float64 | 注意单位: 亿元   |
+
+接口示例
+
+```python
+import akshare as ak
+
+fund_portfolio_asset_allocation_em_df = ak.fund_portfolio_asset_allocation_em(symbol="000001", date="2024")
+print(fund_portfolio_asset_allocation_em_df)
+```
+
+数据示例
+
+```
+         报告期  股票占净值比例  债券占净值比例  现金占净值比例   净资产
+0  2024-12-31    64.04    26.85    13.07  25.11
+1  2024-09-30    74.50    20.53     7.18  25.79
+2  2024-06-30    72.07    20.46     8.06  23.54
+3  2024-03-31    72.56    21.11     6.73  22.96
+```
+
 ### 重大变动
 
 接口: fund_portfolio_change_em
